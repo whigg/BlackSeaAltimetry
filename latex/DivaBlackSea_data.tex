@@ -1,0 +1,170 @@
+\input{HeaderBeamer2014}
+\usepackage{times}
+%\usepackage{helvet}
+%\usepackage{newcent}
+%\usefonttheme{serif}
+%\usepackage{libertine}
+
+\newcommand\quelle[1]{{%
+      \unskip\nobreak\hfil\penalty50
+      \hskip2em\hbox{}\nobreak\hfil\textbf{#1}%
+      \parfillskip=0pt \finalhyphendemerits=0 \par}}
+
+\parindent 0cm
+\setbeamertemplate{navigation symbols}{}
+
+\title{Preparation of Altimetry Data for Diva}
+\author{C.~Troupin}
+\date{}
+
+\begin{document}
+
+%____________________________________________________________________________________________________________________________
+\begin{frame}[fragile]
+\centering
+
+\maketitle
+Last modified: \currenttime
+
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Requirements}
+\footnotesize
+
+\begin{itemize}
+\item[\checkmark] awk
+\item[\checkmark] nco: \url{http://nco.sourceforge.net/}
+\item[\checkmark] nco filters: download from \url{http://nco.sourceforge.net/nco.html}\\ (look for "Filters for ncks") and add in \texttt{.bashrc} file
+\end{itemize}
+
+\end{frame}
+%____________________________________________________________________________________________________________________________
+\section{Data preparation}
+\begin{frame}
+\frametitle{Data download}
+\footnotesize
+\begin{description}
+\item[Operation:] download from from AVISO FTP: /regional-blacksea/delayed-time/along-track/unfiltered/sla
+\item[Tool:] fireFTP, FileZilla
+\item[File format:] NetCDF
+\item[Location:] \$\{DATADIR\}/NetCDF/ 
+\end{description}
+\end{frame}
+
+%____________________________________________________________________________________________________________________________
+
+\begin{frame}
+\frametitle{Conversion to text format}
+
+\footnotesize
+\begin{description}
+\item[Operation:] convert from NetCDF to ascii  
+\item[Tool:] ./blacksea\_netcdf\_ascii
+\item[Options:] input and output directories
+\item[File structure:] longitude | latitude | sla | weight | mission | time | track | cycle
+\item[Location:] \$\{DATADIR\}/1-ascii 
+\item[Elapsed time:]  885.225  s
+\item[Processed:]  15113  files
+\end{description}
+\end{frame}
+
+%____________________________________________________________________________________________________________________________
+
+\begin{frame}
+\frametitle{Mission merging}
+\footnotesize
+\begin{description}
+\item[Operation:] gather missions for common periods\\
+ (here: days, but could be weeks)
+\item[Tool:] ./blacksea\_concat\_missions
+\item[Options:] input and output directories; initial and final dates
+\item[File structure:] longitude | latitude | sla | weight | mission | time | track | cycle
+\item[Location:] \$\{DATADIR\}/2-mission\_concat/ 
+\item[Elapsed time:]  562.49 s
+\item[Processed:]  7306  files
+\end{description}
+\end{frame}
+%____________________________________________________________________________________________________________________________
+
+\begin{frame}
+\frametitle{Period merging}
+\footnotesize
+\begin{description}
+\item[Operation:] gather daily files over a given period
+\item[Tool:] ./blacksea\_concat\_days
+\item[Options:] merging period (here: 60 days)
+\item[File structure:] longitude | latitude | sla | weight | mission | time | track | cycle
+\item[Location:] \$\{DATADIR\}/3-time\_concat\_60days/
+\item[Elapsed time:] 185.69 s
+\item[Processed:]  7306 files
+\end{description}
+\end{frame}
+%____________________________________________________________________________________________________________________________
+
+\begin{frame}
+\frametitle{Time weight calculation}
+\footnotesize
+\begin{description}
+\item[Operation:] apply weights
+\item[Tool:] ./blacksea\_apply\_weight\_time
+\item[Options:] correlation time scale in days (here: 10 days)
+\item[File structure:] longitude | latitude | sla | weight | mission | time | track | cycle
+\item[Location:] \$\{DATADIR\}/4-time\_weight\_10.0/
+\item[Elapsed time:]  490.13 s
+\item[Processed:] 7306 files
+\end{description}
+\end{frame}
+
+%____________________________________________________________________________________________________________________________
+
+\begin{frame}[fragile]
+\frametitle{Check}
+\footnotesize
+
+First file created should be\\
+{\scriptsize dt\_blacksea\_merged\_sla\_vxxc\_19930101\_19930302\_19930131\_timeW10.0.dat}
+
+
+\begin{description}
+\item[19930101=] first day of the considered period
+\item[19930304=] last day of the considered period
+\item[19930131=] mean day
+\item[timeW10.0:] time correlation scale = 10 days
+\end{description}
+
+First lines look like:
+{\scriptsize
+\begin{verbatim}
+40.052540 41.087976 0.210000 0.000198799 e1 15706.805453 999 16
+40.033199 41.145443 0.202000 0.0001988   e1 15706.805464 999 16
+40.013831 41.202908 0.182000 0.000198802 e1 15706.805475 999 16
+39.994435 41.260369 0.158000 0.000198803 e1 15706.805487 999 16
+39.975011 41.317828 0.101000 0.000198804 e1 15706.805498 999 16
+39.955561 41.375284 0.064000 0.000198806 e1 15706.805509 999 16
+39.936085 41.432737 0.048000 0.000198807 e1 15706.805521 999 16
+39.916582 41.490188 0.009000 0.000198808 e1 15706.805532 999 16
+\end{verbatim}
+}
+
+\end{frame}
+
+%____________________________________________________________________________________________________________________________
+\section{Analysis}
+\begin{frame}
+\frametitle{Requirements}
+\footnotesize
+
+\begin{itemize}
+\item[\checkmark] Diva software: {http://modb.oce.ulg.ac.be/mediawiki/upload/DIVA/releases/diva-4.6.5.tar.gz}
+\item[\checkmark] data files, located in \$\{DATADIR\}/4-time\_weight\_10.0/
+\item[\checkmark] contour file: \texttt{coast.cont} in \$\{DIVADIR\}/contours/
+\item[\checkmark] parameters files: \texttt{param.par.mesh} and \texttt{param.par.base} in \$\{DIVADIR\}/parameters/
+\end{itemize}
+
+\end{frame}
+
+
+\end{document}

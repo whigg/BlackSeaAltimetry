@@ -1,0 +1,33 @@
+Operation: download from from AVISO FTP: /regional-blacksea/delayed-time/along-track/unfiltered/sla
+Tool: fireFTP
+File structure: NetCDF
+Location: /data_local/AVISO/BlackSea/NetCDF/
+
+Operation: convert from NetCDF to ascii  
+Tool: ./blacksea_netcdf_ascii
+File structure: longitude | latitude | sla | weight | mission | time | track | cycle
+Location: /home/ctroupin/DataOceano/AVISO/BlackSea/1-ascii 
+Elapsed time:  885.225  s
+Processed  15113  files
+
+Operation: gather missions
+Tool: ./blacksea_concat_missions
+File structure: longitude | latitude | sla | weight | mission | time | track | cycle
+Location: /home/ctroupin/DataOceano/AVISO/BlackSea/ascii/../2-mission_concat/ 
+Elapsed time:  382.489  s
+Processed  7050  files
+ 
+Operation: gather data for a given period
+Tool: ./blacksea_concat_days
+File structure: longitude | latitude | sla | weight | mission | time | track | cycle
+Location: /home/ctroupin/DataOceano/AVISO/BlackSea/3-time_concat_60days/
+Elapsed time:  
+Processed  7050  files
+
+Operation: apply weights
+Tool: ./blacksea_apply_weight_time
+File structure: longitude | latitude | sla | weight | mission | time | track | cycle
+Location: /home/ctroupin/DataOceano/AVISO/BlackSea/4-time_weight_10.0/
+Elapsed time: 
+Processed    files
+ 

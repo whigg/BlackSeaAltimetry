@@ -1,0 +1,87 @@
+\documentclass[finals,xcolor=pdftex,table,14pt]{beamer}
+
+%\usetheme{Malmoe}
+\usecolortheme{dolphin}
+\usefonttheme{professionalfonts}
+\setbeamercovered{dynamic}
+
+
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{url}
+\usepackage{ifsym}
+%\usepackage{colortbl}
+\usepackage{wasysym}
+\usepackage{marvosym}
+\usepackage{xspace}
+\usepackage{array}
+\usepackage{datetime}
+%\usepackage[table]{xcolor}
+
+
+\DeclareGraphicsExtensions{.JPG,.jpg,.pdf,.png,.PNG,.jpeg}
+\graphicspath{
+{./figures/}
+}
+
+\definecolor{sdnblue}{HTML}{005baa}
+\definecolor{sdngrey}{HTML}{646464}
+
+\setbeamertemplate{navigation symbols}{}
+%\setbeamercolor{title}{fg=white}
+%\setbeamercolor{background canvas}{bg=black!95}
+%\setbeamercolor{normal text}{bg=black,fg=white}
+\setbeamercolor{frametitle}{fg=sdnblue}
+%\setbeamercolor{section in sidebar}{fg=blue!70}
+%\setbeamercolor{sidebar}{fg=black}
+%\setbeamercolor{structure}{bg=black,fg=black!5}
+%\setbeamercolor{item projected}{fg=black,bg=white}
+
+
+\setbeamertemplate{items}[square] 
+\setbeamertemplate{caption}[numbered]
+\setbeamerfont{caption}{size=\scriptsize,family=\it}
+\usefonttheme{professionalfonts} % using non standard fonts for beamer
+\usefonttheme{serif} % default family is serif
+
+
+%--------------------------------
+\hypersetup{bookmarksopen=true,
+bookmarksnumbered=true,  
+pdffitwindow=true, 
+pdfstartview=Fit,
+%pdfpagemode=FullScreen,
+pdffitwindow=true,
+pdftoolbar=true,
+pdfmenubar=true,
+pdfwindowui=true,
+pdfauthor={Charles Troupin},
+pdftitle={Altimetry Data preparation},
+pdfsubject={Black Sea},
+bookmarksopenlevel=0,
+colorlinks=true,
+linkcolor=blue,anchorcolor=black,%
+citecolor=blue,filecolor=black,%
+menucolor=black,urlcolor=blue,%
+pdfpageduration=1,%
+}
+
+
+
+
+\newcommand{\diva}{\textsf{Diva}\xspace}
+\newcommand{\gher}{\textsf{GHER}}
+\newcommand{\dineof}{\textsf{DINEOF}}
+%\newcommand{\important}{\textcolor{blue}}
+\newcommand{\important}{\textcolor{yellow}}
+\newcommand{\importantm}[1]{\textcolor{yellow}{\mathbf{#1}}}
+\newcommand{\fleche}{\hspace*{.15cm}$\rightarrow$\hspace*{.15cm}}
+%--------------------------------

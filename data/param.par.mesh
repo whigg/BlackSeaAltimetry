@@ -1,0 +1,26 @@
+# Lc: correlation length (in units coherent with your data)#
+0.3    
+# icoordchange (=0 if no change of coordinates is to be performed; =1 if positions are in degrees and if you want to use real distances)#
+1
+# ispec: output files required#
+0
+# ireg: mode selected for background field: 0=null guess; 1=mean of data; 2=regression plan if at least 3 non-aligned data provided#
+2
+# xori: x-coordinate of the first grid point of the output#
+27.0625
+# xori: y-coordinate of the first grid point of the output#
+40.4375
+# dx: step of output grid#
+0.125
+# dy: step of output grid#
+0.125
+# nx: number of grid points in the x-direction#
+121
+# ny: number of grid points in the y-direction#
+54
+# valex: exclusion value#
+-99
+# snr: signal to noise ratio of the whole dataset#
+  0.3723210    
+# varbak: variance of the background field. If zero, no error fields are produced. If one, relative errors are obtained#
+  0.2804506    

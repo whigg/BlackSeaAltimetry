@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# count the number of data for each daily file
+datadir='/home/ctroupin/DataOceano/AVISO/BlackSea/2-mission_concatB/'
+outputdir='/home/ctroupin/DIVA/BlackSea_Altimetry/diagnostics/'
+outputfile='datanum_blacksea_daily2.dat'
+
+rm ${outputdir}${outputfile}
+
+for datafiles in $(ls ${datadir}'dt_blacksea_'*'.dat' | xargs -n 1 basename | sort -n -t _ -k 6)
+do
+  echo ${datafiles}
+  date1=$(basename $datafiles | cut -d '_' -f 6 | cut -d '.' -f 1)
+  datanum=$(cat ${datadir}${datafiles} | wc -l)
+  echo $date1 $datanum >> ${outputdir}${outputfile}
+done

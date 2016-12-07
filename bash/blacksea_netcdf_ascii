@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# Usage
+# 
+# blacksea_netcdf_ascii DIRECTORY/*.nc
+#
+
+# Transform the netcdf files obtained from AVISO FTP
+# into ascii files directly readable by DIVA.
+# Also add a column for the satellite
+#
+# format of output file looks like
+#
+# lon       lat       sla      w mission time         track cycle
+# 30.602605 35.935119 0.132000 1 enn     22270.361594 732   97
+#
+# ctroupin, August 2013
+
+#---------------------------------------------------------------------------
+
+if [ "$#" == "1" ]
+then
+  datadir=$1
+else
+  datadir='/home/ctroupin/DataOceano/AVISO/BlackSea/0-NetCDF/'
+fi
+
+# Source bashrc to have the netcdf commands defined in it
+source ~/.bashrc
+
+outputdir=${datadir}'../1-ascii/'
+mkdir -p ${outputdir}
+
+
+timeinit=$(date +%s.%N)
+
+# Create a temporary working directory
+tmpdir='/tmp/'$$'/'
+mkdir -p $tmpdir
+
+filelist=$(ls ${datadir}*'/'*'/'*'.nc')
+nfiles=$(echo $filelist | wc -w)
+
+#Loop on the files that match the pattern of $1
+for inputfile in ${filelist}
+do
+
+  # Create output filename 
+  # by changing '.nc' into '.dat'
+  outputfile=${outputdir}$(basename $inputfile '.nc')'.dat'
+  
+  #echo 'writing '${outputfile}
+
+  fname=${inputfile}
+
+  # Extract mission name from file name
+  mission=$(basename ${fname} | cut -d "_" -f 3 )
+
+  #Extract the fill_value from the file
+  valex=$(ncattget _FillValue SLA $fname)
+
+  #Unpack variables 
+  fname2=${tmpdir}'/tmp.nc'
+  ncpdq -U $fname ${fname2}
+
+  #Write only lines of variables starting with a number
+  #Also check if lon is between -180 and 180 degrees
+
+  ncks -s '%f\n' -C -v longitude ${fname2} | grep '^[0-9]' > ${tmpdir}'tmp1_lon.dat'
+  ncks -s '%f\n' -C -v latitude ${fname2}  | grep '^[0-9]' > ${tmpdir}'tmp2_lat.dat'
+  ncks -s '%f\n' -C -v SLA ${fname2}  | grep '^[0-9,-]' > ${tmpdir}'tmp3_sla.dat' 
+  ncks -s '%f\n' -C -v time ${fname2}  | grep '^[0-9]' > ${tmpdir}'tmp4_time.dat'
+  ncks -s '%u\n' -C -v track ${fname2}  | grep '^[0-9,-]' > ${tmpdir}'tmp5_track.dat'
+  ncks -s '%u\n' -C -v cycle ${fname2}  | grep '^[0-9]' > ${tmpdir}'tmp6_cycle.dat'
+
+
+  # Merge the files,
+  # remove exclusion values 
+  # and rearrange columns (lon lat sla 1 time track cycle)
+  paste ${tmpdir}tmp*.dat | awk -v valex=$valex -v mission=$mission '{ if ($3 != valex) print $1,$2,$3,1,mission,$4,$5,$6}' > ${outputfile}
+  rm ${fname2}
+
+done	#---end of the loop on the files
+
+
+timeend=$(date +%s.%N)
+timerun=$(echo ${timeend} ${timeinit} | awk '{print ($1-$2)}')
+
+echo ' '
+echo 'Elapsed time: ' $timerun ' s'
+echo 'Processed ' $nfiles ' files'
+echo ' '
+
+#Clean intermediate files (tmp directory)
+rm -rf ${tmpdir}
+
+echo 'New files written in '$outputdir

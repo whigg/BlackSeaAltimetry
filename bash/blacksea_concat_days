@@ -1,0 +1,93 @@
+#!/bin/bash
+# blacksea_concat_days2
+
+# Concatenate the daily files (obtained with "medsea_write_data_day"
+# according to the time of measurement
+# 
+# ctroupin, June-August 2013
+#-----------------------------------------------------------------------
+
+# number of days for the concat files
+# (not too important as long as the period is long enough)
+ndays=60
+
+# Allocate an array containing file list
+declare -a sortedfilelist
+
+# Set data directory
+if [ "$#" == "1" ]
+then
+  datadir=$1
+else 
+  datadir='/home/ctroupin/DataOceano/AVISO/BlackSea/Filtered/2-mission_concat/'
+fi
+
+timeinit=$(date +%s.%N)
+
+# Create outputdir where new files are to be written
+outputdir=${datadir}'../3-time_concat_'$ndays'days/'
+mkdir -p $outputdir
+
+myfile=${outputdir}'sortedarray.dat'
+
+# Filename = prefix + mission + midpart + date (only one because daily files)
+# ex: dt_blacksea_tp_sla_vxxc_20001021.dat 
+fileprefix='dt_blacksea_'
+filemidpart='_sla_vfec_'
+filesuffix='.dat'
+
+# Create a sorted file list according to time (now 6th part of file name)
+filelistsorted=$(ls ${datadir}${fileprefix}* | xargs -n 1 basename | sort -n -t _ -k 6)
+
+# Create an array containing the list (easier for indexing)
+sortedfilelist=(${filelistsorted})
+# Append data directory to each element of the array
+sortedfilelist=( "${sortedfilelist[@]/#/${datadir}}" )
+
+# Compute number of times
+ntimes=${#sortedfilelist[@]}
+
+echo 'Number of daily files = '$ntimes
+echo '--------------------------------'
+ndays2=$(echo $ndays | awk '{print $1/2}')
+ntimes2=$(echo ${ntimes} ${ndays2} | awk '{print ($1-$2-1)}')
+
+# Start a loop on time
+# (first index is 0)
+
+for t in $(seq ${ndays2} ${ntimes2} )
+do
+  let t1=${t}-${ndays2}
+  let t2=${t}+${ndays2}
+  
+  #echo 't1= '$t1', t2= '$t2
+  
+  dateinit=$(basename ${sortedfilelist[t1]} | cut -d '_' -f 6 | cut -d '.' -f 1)
+  dateend=$(basename ${sortedfilelist[t2]} | cut -d '_' -f 6 | cut -d '.' -f 1)
+  datemean=$(basename ${sortedfilelist[t]} | cut -d '_' -f 6 | cut -d '.' -f 1) 
+
+  ## For testing
+  #echo $t1'_'$t2
+  #echo $dateinit'_'$dateend
+  #echo ''
+  
+  # Construct file name
+  file2write=${outputdir}${fileprefix}'merged'${filemidpart}${datemean}'_'${dateinit}'_'${dateend}${filesuffix}
+  
+  # Concat files contained in the file list:
+  # start at time t and take ndays files 
+  # (ndays/2 before and ndays/2 after)
+  cat ${sortedfilelist[@]:${t1}:${ndays}} > ${file2write}
+done
+
+
+
+
+echo $'New files written in '
+echo ' '${outputdir}
+
+timeend=$(date +%s.%N)
+timerun=$(echo ${timeend} ${timeinit} | awk '{print ($1-$2)}')
+echo ''
+echo 'Elapsed time: '${timerun}
+

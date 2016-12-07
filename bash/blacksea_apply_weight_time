@@ -1,0 +1,103 @@
+#!/bin/bash
+export LC_ALL=C
+#
+# medsea_apply_weight_time3
+# 
+# Compute the weights according to the time difference
+# Use a gaussian distribution
+# 
+# Note: dates in files are expressed in days since 1950-01-01 00:00:00 UTC
+# -------------------------------------------------------------------------------------------------------
+
+Tscale=10.0 # Time scale, in days
+
+datadir='/home/ctroupin/DataOceano/AVISO/BlackSea/Filtered/3-time_concat_60days/'
+outputdir=${datadir}'../4-time_weight_'${Tscale}'/'
+logfile=${outputdir}'data_weight_10days.log'
+
+mkdir -pv $outputdir
+
+# Extract mean time from the file name
+#
+# Linux command date uses 1970 as year of reference
+# while AVISO uses 1950, hence a change is necessary
+dateref1950=$(date -d "19500101" "+%s")
+dateref1970=$(date -d "19700101" "+%s")
+date2add=$(echo ${dateref1950} ${dateref1970} | awk '{printf ("%f",($2-$1)/86400)}')
+
+timeinit=$(date +%s.%N)
+
+fileprefix='dt_blacksea_'
+filemidpart='_sla_vfec_'
+filesuffix='.dat'
+
+# Create a sorted file list according to time (now 6th part of file name)
+# ex: dt_blacksea_merged_sla_vxxc_19930131_19930101_19930302.dat
+filelistsorted=$(ls ${datadir}${fileprefix}* | xargs -n 1 basename | sort -n -t _ -k 6)
+
+
+# Loop on files
+for datafile in ${filelistsorted}
+do
+
+  ##echo 'Working on file ' ${datafile} 
+  #echo ' ' 
+
+  datafile2=$(basename $datafile .dat)'_timeW'$Tscale'.dat'
+  #echo $datafile2
+
+  # extract dates from file name
+  datemean=$(basename ${datafile} | cut -d '_' -f 6)
+  dateinit=$(basename ${datafile} | cut -d '_' -f 7)
+  dateend=$(basename ${datafile} | cut -d '_' -f 8 | cut -d '.' -f 1)
+  
+  #echo 'initial date: ' ${dateinit}
+  #echo 'final date:   ' ${dateend}
+  #echo 'mean date:   ' ${datemean}
+
+  # convert date format YYYYMMDD --> seconds since Jan 1, 1970
+  #dateinit2=$(date -d $dateinit "+%s" | awk '{printf ("%0.f",$1/86400.0)}' )
+  #dateend2=$(date -d $dateend "+%s" | awk '{printf ("%0.f",$1/86400.0)}' )
+  datemean2=$(date -d $datemean "+%s" | awk '{printf ("%0.f",$1/86400.0)}' )
+  
+  ## Testing
+  #echo $dateinit2 
+  #echo $dateend2 
+  #echo $datemean2
+  
+  # Compute mean dates based on dateinit and dateend
+  #datemean=$(echo $dateinit2 $dateend2 $date2add | awk '{printf ("%f",(0.5*($1+$2)+$3) ) }' )
+  datemean2=$(echo $datemean2 $date2add | awk '{printf ("%f",$1+$2) }' )
+  
+  #echo 'Mean time = ' $datemean
+  #echo '            ' $datemean2
+  #echo '            ' $datemean3
+  
+  # Compute the mean time
+  # and the standard deviation
+  timemean=$(awk '{s+=$6} END { printf("%f\n",s/NR)}' ${datadir}${datafile} ) 
+  timestd=$(awk '{x[NR]=$6; s+=$6} END{time_mean=s/NR; for (i in x){ss += (x[i]-time_mean)**2} std = sqrt(ss/NR); printf("%f\n",std)}'  ${datadir}${datafile})
+ 
+  #echo $datemean2
+  #echo $timemean
+  #echo ' '  
+  
+	
+  #timediff=$(echo $timemean $datemean2 | awk '{print $1-$2}' )
+  #echo $timemean $datemean2 $timediff >> $logfile
+  # To check
+  ##echo 'STD = ' $timestd
+  ##echo 'Mean = ' $timemean
+
+  awk -v mean=${datemean2} -v std=${timestd} -v coeff=$Tscale '{newweights=exp(-($6-mean)*($6-mean)/(coeff*coeff))} {print $1,$2,$3,newweights,$5,$6,$7,$8}' ${datadir}${datafile}  > ${outputdir}${datafile2}
+
+done
+
+timeend=$(date +%s.%N)
+timerun=$(echo ${timeend} ${timeinit} | awk '{print ($1-$2)}')
+
+echo ''
+echo 'Elapsed time: '${timerun}
+echo ' '
+echo 'New files written in ' 
+echo ${outputdir}

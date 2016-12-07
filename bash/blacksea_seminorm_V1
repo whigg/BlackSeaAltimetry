@@ -1,0 +1,100 @@
+#!/bin/bash
+#
+# blacksea_seminorm_V1 
+#
+# Loop on the data files and perform a semi-normed analysis
+# 
+# ctroupin, September 2014
+#-----------------------------------------------------------------------------
+
+if [ "$#" == "1" ]
+then
+  year=$1
+  echo 'Working on year '$year 
+else
+  year=''
+  echo 'Working on all the years'
+fi
+echo ' ' 
+
+Tscale='10.0'
+
+# File and directory names
+basedir='/data_local/DIVA/BlackSea_Altimetry/'
+datadir='/data_local/AVISO/BlackSea/Unfiltered/4-time_weight_10.0/'
+#datadir=${basedir}'data/'
+contourdir=${basedir}'contours/'
+paramdir=${basedir}'parameters/'
+resultdir=${basedir}'results/V2_seminorm/Unfiltered/'$year
+logdir=${resultdir}'/../log/'
+htmldir='/home/ctroupin/public_html/diva_blacksea/V2_seminorm/Unfiltered/'
+
+parammeshfile='param.par.mesh'
+paramfile='param.par.base'
+contourfile='coast_edited.cont'
+
+# Filename = prefix + mission + nmidpart + dates
+# dt_blacksea_merged_sla_vxxc_19930101_19930304_19930131_timeW10.0.dat
+fileprefix='dt_blacksea_'
+filemidpart='sla_vxxc_'$year
+filesuffix='.dat'
+
+logfile=${logdir}'diva_'${fileprefix}$$'.log'
+
+#-----------------------------------------------------------------------------
+
+# Create new directories if necessary
+mkdir -p $resultdir
+#mkdir -p $processeddir
+mkdir -p $logdir
+
+# Some cleaning is welcome
+./divaclean
+rm -f input/*
+rm -f output/*
+
+# Copy files and create mesh (once)
+cp ${contourdir}${contourfile} ./input/coast.cont
+cp ${paramdir}${parammeshfile} ./input/param.par
+
+./divamesh > $logfile
+
+cp ${paramdir}${paramfile} ./input/param.par
+
+timeinit=$(date +%s.%N)
+
+echo 'Job started at ' $(date) | tee -a $logfile
+
+for datafiles in $(ls ${datadir}${fileprefix}*${filemidpart}*${filesufix})
+do
+  echo $datafiles  >> $logfile
+  echo '_________' >> $logfile
+  
+  resultfile=$(basename $datafiles .dat)'.nc'
+
+  cp $datafiles ./input/data.dat
+
+  ./divacalc >> $logfile
+			
+  # Copy NetCDF file to visualise the field
+  cp ./output/ghertonetcdf/results.nc ${resultdir}'/'${resultfile}
+  
+    
+done
+
+timeend=$(date +%s.%N)
+
+# compute the difference between the two times
+# using operator "awk"
+timerun=$(echo ${timeend} ${timeinit} | awk '{print ($1-$2)}')
+
+echo '__________________________' | tee -a $logfile
+echo 'Time for run = ' ${timerun} | tee -a $logfile
+echo '__________________________' | tee -a $logfile
+
+echo 'Result files available in directory'  | tee -a $logfile
+echo ${resultdir}                           | tee -a $logfile
+
+tar -czf ${resultdir}'/../'${year}'.tar.gz' ${resultdir} 
+#cp ${resultdir}'/../'${year}'.tar.gz' ${htmldir}
+

@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Concatenate the files corresponding to common dates
+# but with different missions
+#
+# ctroupin, June 2013
+#-----------------------------------------------------------------------
+
+
+firstdate=19930101
+lastdate=20130101
+
+if [ "$#" == "1" ] 
+then 
+  datadir=$1
+else
+  datadir='/home/ctroupin/DataOceano/AVISO/BlackSea/Filtered/1-ascii/'
+fi
+
+timeinit=$(date +%s.%N)
+
+# Create outputdir where new files are to be written
+outputdir=${datadir}'../2-mission_concat/'
+mkdir -p $outputdir
+
+# Filename = prefix + mission + nmidpart + dates
+# dt_blacksea_c2_sla_vxxc_20110128_20140106.dat
+fileprefix='dt_blacksea_'
+filemidpart='_sla_vfec_'
+filesuffix='.dat'
+
+# Loop on time:
+# go from January 1, 1993 to December 31, 2012
+# If no mission for some given dates, create empty files
+
+let filetime=${firstdate}
+let i=0
+while [ "$filetime" -lt "$lastdate" ] 
+do 
+  filetime=$(date +%Y%m%d -d "$firstdate + $i day")
+
+  #echo $filetime
+  let i=$i+1
+ 
+  # Create empty satellite (or mission) name
+  sat=''
+
+  # Check number of available files
+  #nfiles=$( ls ${datadir}${fileprefix}*${filetime}* | wc -l )
+  nfiles=$( find ${datadir} -type f -name ${fileprefix}*${filetime}* | wc -l )
+  
+  #echo 'Working on '$nfiles ' files'
+  # Check if number of files > 0
+  if [ "$nfiles" -gt "0" ]; then
+    # Loop on the files corresponding to the given time "filetime"
+    filelistsorted=$(ls ${datadir}${fileprefix}*${filetime}*)
+    for datafiles in ${filelistsorted}
+    do
+      # Build satellite name by concatening
+      sat=${sat}$(basename $datafiles | cut -d "_" -f 3)
+    done
+
+    # Create output file name
+    # and concat files 
+    outputfile=$outputdir$fileprefix$sat$filemidpart$filetime$filesuffix
+    cat ${datadir}${fileprefix}*${filetime}* > $outputfile
+
+  # if no file for the current date, create en empty one
+  else
+    #echo 'No data for ' $filetime
+    sat='XX'
+    outputfile=$outputdir$fileprefix$sat$filemidpart$filetime$filesuffix
+    touch ${outputfile} 
+  fi 
+
+
+done
+
+timeend=$(date +%s.%N)
+timerun=$(echo ${timeend} ${timeinit} | awk '{print ($1-$2)}')
+
+nfiles=$i
+
+echo ' '
+echo 'Elapsed time: ' $timerun ' s'
+echo 'Processed ' $nfiles ' files'
+echo ' '
+echo 'New files written in '$outputdir
